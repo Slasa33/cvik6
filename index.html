@@ -7,7 +7,7 @@
   <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
   <script src="https://unpkg.com/jquery/dist/jquery.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
- <script > 
+ <script> 
 
 
 // HOTOVO - Prevodnik s argumenty datum, jazyk, bran v potaz i prepocet men
@@ -18,7 +18,7 @@
 //TODO 4 Využití sse event stream
 
 var curList = [];
-var urlCNB = "http://linedu.vsb.cz/~mor03/TAMZ/cnb_json.php";
+var urlCNB;
 var global_id;
 var global_language;
 var global_date;
@@ -43,20 +43,18 @@ document.addEventListener('init', function(event)
 
         CurrentDate();
         loadLangDate();
-        loadCNB();
-
         global_id = 0;
 
-//     $(document).ready(function(){
-//         $("#CZK").keyup(function()
-//         {
-//             FromCZK();
-//         });
-//         $("#CUR").keyup(function()
-//         {
-//             ToCZK();
-//         });
-// });
+    $(document).ready(function(){
+        $("#CZK").keyup(function()
+        {
+            FromCZK();
+        });
+        $("#CUR").keyup(function()
+        {
+            ToCZK();
+        });
+});
 
     }
 });
@@ -71,12 +69,13 @@ function loadCNB()
         {
            let myCurrency = new Currency(json.data[i].country_label, json.data[i].curr_label, json.data[i].unit, json.data[i].code, json.data[i].rate);
            curList.push(myCurrency);
-        }                  
-    }); 
-    
+        }   
+        
     var myText = curList[global_id].country_label + " " + curList[global_id].rate;
-           $("#push-button1").text(myText);
+    $("#push-button1").text(myText);
     document.getElementById("curP").innerHTML = myText;
+    
+    }); 
 
 }
 
