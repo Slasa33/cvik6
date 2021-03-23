@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"> 
+  <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsenui.css">
+  <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsen-css-components.min.css">
+  <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
+  <script src="https://unpkg.com/jquery/dist/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+ <script > 
+
+
+// HOTOVO - Prevodnik s argumenty datum, jazyk, bran v potaz i prepocet men
+
+//TODO 1 Základní verze převodníku bez argumentů (datum, jazyk) 
+//TODO 2 Využití argumentů datum, jazyk 
+//TODO 3 Využití rozšířeného listu s filtrem
+//TODO 4 Využití sse event stream
+
+var curList = [];
+var urlCNB = "http://linedu.vsb.cz/~mor03/TAMZ/cnb_json.php";
+var global_id;
+var global_language;
+var global_date;
+
+
+class Currency
+{
+    constructor(country_label, curr_label, unit, code, rate)
+    {
+        this.country_label = country_label;
+        this.curr_label = curr_label;
+        this.unit = unit;
+        this.code = code;
+        this.rate = rate;
+    }
+}
+
+document.addEventListener('init', function(event)
+{
+    if (event.target.id === 'page1')
+    {
+
+        CurrentDate();
+        loadLangDate();
+        loadCNB();
+
+        global_id = 0;
+
+//     $(document).ready(function(){
+//         $("#CZK").keyup(function()
+//         {
+//             FromCZK();
+//         });
+//         $("#CUR").keyup(function()
+//         {
+//             ToCZK();
+//         });
+// });
+
+    }
+});
+
+function loadCNB()
+{
+    $.getJSON( urlCNB, function( json )
+    {
+        curList = [];
+
+        for(var i = 0; i < json.data.length; i++)
+        {
+           let myCurrency = new Currency(json.data[i].country_label, json.data[i].curr_label, json.data[i].unit, json.data[i].code, json.data[i].rate);
+           curList.push(myCurrency);
+        }                  
+    }); 
+    
+    var myText = curList[global_id].country_label + " " + curList[global_id].rate;
+           $("#push-button1").text(myText);
+    document.getElementById("curP").innerHTML = myText;
+
+}
+
+
+
+function addDialog()
+{
+    document.getElementById('dialog-1').show();
+    $("#onsList").empty();
+    for (var i = 0; i < curList.length; i++)
+    {
+        var onsItem = document.createElement('ons-list-item');
+        var todoText = i + ". " + curList[i].country_label + " - " + curList[i].curr_label + " - " + curList[i].rate;   
+        onsItem.innerHTML = todoText; 
+        onsItem.setAttribute('modifier', "tappable");
+        onsItem.setAttribute('onclick', 'setCountry('+i+')');
+        document.getElementById('onsList').appendChild(onsItem);               
+    }    
+}
+
+
+function setCountry(id)
+{
+    global_id = id;
+
+    document.getElementById('dialog-1').hide();
+    $("#push-button1").text(curList[id].country_label + " " + curList[id].rate);
+    $("#curP").text(curList[id].country_label + " " + curList[id].rate);
+}
+
+function closeDialog()
+{
+    document.getElementById('dialog-1').hide();
+}
+
+
+function FromCZK()
+{
+    var from_czk = document.getElementById('CZK').value / curList[global_id].rate * curList[global_id].unit
+    document.getElementById('CUR').value = Math.round(from_czk * 10) / 10;
+}
+
+function ToCZK()
+{
+    var to_czk = document.getElementById('CUR').value * curList[global_id].rate / curList[global_id].unit
+    document.getElementById('CZK').value = Math.round(to_czk * 10) / 10;
+}
+
+function setDays()
+{
+    var inputDate = document.getElementById('dateInput').value;
+    var myDate = new Date(inputDate);   
+    var year = myDate.getFullYear();
+    var month = myDate.getMonth()+1;
+    var day = myDate.getDate(); 
+
+
+    if(day.toString().length == 1) {
+      day = "0"+day;
+    }
+    if(month.toString().length == 1) {
+      month = "0"+month;
+    }
+
+    return 'date=' + year + '-' + month + '-' + day;
+}
+
+
+function GetLanguage()
+{
+    var flag = document.getElementById("LanguageSwitch").checked;
+
+    if(flag == false)
+    {
+        return 'lang=cs'
+    }
+    else return 'lang=en'
+}
+
+function CurrentDate()
+{
+    document.getElementById('dateInput').value = new Date().toISOString().slice(0, 10);
+}
+
+function loadLangDate()
+{
+    var _language = GetLanguage();
+    var _date = setDays();
+
+    urlCNB = "http://linedu.vsb.cz/~mor03/TAMZ/cnb_json.php" + '?' + _language + '&' + _date;
+    loadCNB();
+    console.log(urlCNB);
+}
+
+
+// function search(value)
+// {
+//     let list1 = curList.map((x) => x);
+//     list1 = list1.filter(myCurrency =>  myCurrency.country_label.toLowerCase().includes(value.toLowerCase()) )
+//     $("#onsList").empty();
+
+//     for(var i = 0; i < list1.length; i++)
+//     {
+//         var onsItem = document.createElement('ons-list-item');
+//         onsItem.innerHTML = i + ". " + list1[i].country_label + " - " + list1[i].curr_label + " - " + list1[i].rate;
+//         onsItem.setAttribute('monifier', "tappable");
+//         onsItem.setAttribute('onclick', 'setCountry(' + i + ')');
+//         document.getElementById('onsList').appendChild(onsItem);
+//     }
+// }
+
+</script>  
+  
+</head>
+<body>
+<ons-navigator swipeable id="myNavigator" page="page1.html"></ons-navigator>
+
+<template id="page1.html">
+    <ons-page id="page1">
+        <ons-toolbar>
+            <div class="center">CNB Convertor</div>
+        </ons-toolbar>
+                <p style="text-align: center"> CZK </p>
+                <p style="text-align: center"> <ons-input id="CZK" modifier="underbar material"></ons-input> </p>
+
+                <p style="text-align: center" id="curP">Choose currency!
+                <p style="text-align: center"> <ons-input id="CUR" modifier="underbar material"></ons-input> </p>
+                
+                <p style="text-align: center">
+                <input style="font-size:150%" id="dateInput" type="date" modifier="underbar material" onchange="loadLangDate();"> 
+                </p>
+
+                <p style="text-align: center">
+                    Select language <br>
+                <ons-switch id="LanguageSwitch" onchange="loadLangDate();"></ons-switch>
+                </p>
+
+                <p style="text-align: center">
+                <ons-button modifier="material" id="push-button1" onclick="addDialog();">
+                    Select Currency
+                </ons-button>         
+                </p>
+                <p style="text-align: center" id="myP">
+                </p>
+    </ons-page>   
+</template>
+
+<ons-dialog id="dialog-1">
+
+  <ons-carousel style="width: 100%; height: 400px">
+      <ons-carousel-item>     
+      <ons-page>
+        <p style="text-align: center">
+        <ons-search-input placeholder="Search something" onkeyup="search(this.value)"></ons-search-input>
+        </p>
+       <ons-list id="onsList">
+       </ons-list>
+       
+       </ons-page>
+      </ons-carousel-item>
+    </ons-carousel>  
+    
+</ons-dialog>
+
+</body>
+</html>
+
